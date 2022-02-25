@@ -15,8 +15,6 @@ DATA_PATH = PATH.joinpath("datasets").resolve()
 
 df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini.pkl"))
 
-# df_country = pd.read_pickle(DATA_PATH.joinpath("country.pkl"))
-
 
 def filter_db(df, selected_range, countries, search, keywords):
     cond_on_year = df['Year'].between(selected_range[0], selected_range[1], inclusive='both')
@@ -93,6 +91,10 @@ def keyword_repartition(df):
     fig = px.pie(df_keywords_counter, names="keyword", values="count",
                  title="Frequency of occurrence of Venturini clusters")
     fig.update_traces(textposition='inside', textinfo='value+percent')
+    fig.update_layout(title_font_size=12,
+                      legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                      legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
+
     return fig
 
 
@@ -272,16 +274,22 @@ def generate_table(dataframe, max_rows=1000):
     :return:
         return a Table representation of the dataframe
     """
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns])] +
-        # Body
-        [html.Tr([
-            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
-        ]) for i in range(min(len(dataframe), max_rows))],
-    )
+    return html.Table(style={'border': '1px solid black', 'width': '100%', 'table-layout': 'fixed'},
+                      # Header
+                      children=[html.Tr([html.Th(col) for col in dataframe.columns], )] +
+                               # Body
+                               [html.Tr(
+                                   [html.Td(dataframe.iloc[i][col], style={'font_size': '10'}) for col in
+                                    dataframe.columns],
+
+                               )
+                                   for i in range(min(len(dataframe), max_rows))],
+
+                      )
 
 
+# style = {'font_size': '12px', 'width': '100%', 'overflow-x': 'auto', 'border-spacing': '0', 'display': 'block',
+#          'cellspacing': '0'},
 def network_graph(df, total_actors):
     """
 
@@ -463,11 +471,11 @@ def update_markdown(df):
     max_year = df.Year.max()
     message = ""
     if len(df) > 0:
-        res1 = '- Nombre d\'acteurs unique : {}.  \n'.format(nb_actors)
-        res2 = '- Nombre de messages : {}.  \n'.format(nb_message)
-        res3 = '- Les messages vont de {} à {}.  \n'.format(min_year, max_year)
+        res1 = '- Total unique actors : {}.  \n'.format(nb_actors)
+        res2 = '- Total messages : {}.  \n'.format(nb_message)
+        res3 = '- Messages go from {} to {}.  \n'.format(min_year, max_year)
         message = res1 + res2 + res3
     if len(df) <= 0:
-        message = 'La base de données est vide.'
+        message = 'Database is empty.'
 
     return message

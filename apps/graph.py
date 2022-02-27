@@ -11,8 +11,8 @@ from prep_functions import country_repartition, keyword_repartition, time_evolut
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../datasets").resolve()
 
-df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini.pkl"))
-
+# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
+df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
 # app = dash.Dash(__name__, external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 

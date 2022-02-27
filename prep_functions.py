@@ -13,7 +13,8 @@ from dash import html, dcc
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("datasets").resolve()
 
-df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini.pkl"))
+# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
+df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
 
 def filter_db(df, selected_range, countries, search, keywords):
@@ -29,9 +30,15 @@ def filter_db(df, selected_range, countries, search, keywords):
         cond_search = filtered_df["Message"].str.contains(search)
         filtered_df = filtered_df[cond_search]
     for keyword in keywords:
-        if filtered_df['Venturini_keywords'].str.contains(keyword).any():
-            cond_on_keyword = filtered_df['Venturini_keywords'].str.contains(keyword)
-            filtered_df = filtered_df[cond_on_keyword]
+        if 'Venturini_keywords' in df.columns:
+            if filtered_df['Venturini_keywords'].str.contains(keyword).any():
+                cond_on_keyword = filtered_df['Venturini_keywords'].str.contains(keyword)
+                filtered_df = filtered_df[cond_on_keyword]
+        elif 'event' in df.columns:
+            if filtered_df['event'].str.contains(keyword).any():
+                cond_on_keyword = filtered_df['event'].str.contains(keyword)
+                filtered_df = filtered_df[cond_on_keyword]
+
     return filtered_df
 
 
@@ -85,16 +92,26 @@ def main_keyword(df):
 
 
 def keyword_repartition(df):
-    lst_main_keywords = main_keyword(df)
-    df_keywords_counter = pd.DataFrame(lst_main_keywords, columns=['keyword', 'count'])
-    # fig = px.bar(df_keywords_counter, x="keyword", y="count", text_auto=True)
-    fig = px.pie(df_keywords_counter, names="keyword", values="count",
-                 title="Frequency of occurrence of Venturini clusters")
-    fig.update_traces(textposition='inside', textinfo='value+percent')
-    fig.update_layout(title_font_size=12,
-                      legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
-                      legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
+    if 'Venturini_keywords' in df.columns:
+        lst_main_keywords = main_keyword(df)
+        df_keywords_counter = pd.DataFrame(lst_main_keywords, columns=['keyword', 'count'])
+        # fig = px.bar(df_keywords_counter, x="keyword", y="count", text_auto=True)
+        fig = px.pie(df_keywords_counter, names="keyword", values="count",
+                     title="Frequency of occurrence of Venturini clusters")
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(title_font_size=12,
+                          legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                          legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
 
+    elif 'event' in df.columns:
+        pattern = r'\d+-([A-Z]+)-\d+'
+        grouped = df["event"].groupby(df["event"].str.extract(pattern, expand=False))
+        event_type = grouped.count()
+        fig = px.pie(event_type, values="event", names=event_type.index)
+        fig.update_traces(textposition='inside', textinfo='label+percent')
+        fig.update_layout(title_font_size=12,
+                          legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                          legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
     return fig
 
 
@@ -187,9 +204,20 @@ def unique_keywords(df) -> typing.List:
     :return:
     """
     return_list = []
-    for ind, row in df.iterrows():
-        if row['Venturini_keywords'] != "":
-            return_list = return_list + list(row['Venturini_keywords'].split(", "))
+    if 'Venturini_keywords' in df.columns:
+        """
+        for ind, row in df.iterrows():
+            if row['Venturini_keywords'] != "":
+                return_list = return_list + list(row['Venturini_keywords'].split(", "))
+        """
+        grouped = df['Venturini_keywords'].groupby('Venturini_keywords')
+        keyword_type = grouped.count()
+        return_list = keyword_type.index.to_list()
+    elif 'event' in df.columns:
+        pattern = r'\d+-([A-Z]+)-\d+'
+        grouped = df["event"].groupby(df["event"].str.extract(pattern, expand=False))
+        event_type = grouped.count()
+        return_list = event_type.index.to_list()
     return list(set(return_list))
 
 
@@ -209,6 +237,7 @@ def option_keywords(df):
 
 def upperpart_layout(df: pd.DataFrame, page):
     """
+    :param page: graph or table
     :param df:
     :return:
         return the html upperpart of the layout where the user can narrow the dataframe
@@ -274,22 +303,25 @@ def generate_table(dataframe, max_rows=1000):
     :return:
         return a Table representation of the dataframe
     """
+    url_start = 'https://enb.iisd.org//vol12/'
+    url_finish = '.html'
     return html.Table(style={'border': '1px solid black', 'width': '100%', 'table-layout': 'fixed'},
-                      # Header
-                      children=[html.Tr([html.Th(col) for col in dataframe.columns], )] +
-                               # Body
-                               [html.Tr(
-                                   [html.Td(dataframe.iloc[i][col], style={'font_size': '10'}) for col in
-                                    dataframe.columns],
 
-                               )
-                                   for i in range(min(len(dataframe), max_rows))],
+                      children=
+                      # Header
+                      [html.Tr([html.Th(col) for col in dataframe.columns], )] +
+                      # Body
+                      # https: // enb.iisd.org // vol12 / enb12764e.html
+
+                      [html.Tr(
+                           [html.Td(dataframe.iloc[i][col] if col != 'Num' else html.Td(html.A(href=url_start+str(dataframe.iloc[i]['Num'])+url_finish, children=dataframe.iloc[i][col], target='_blank')), style={'font_size': '10'}) for col in
+                            dataframe.columns],
+
+                       ) for i in range(min(len(dataframe), max_rows))],
 
                       )
 
 
-# style = {'font_size': '12px', 'width': '100%', 'overflow-x': 'auto', 'border-spacing': '0', 'display': 'block',
-#          'cellspacing': '0'},
 def network_graph(df, total_actors):
     """
 

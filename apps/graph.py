@@ -11,10 +11,9 @@ from prep_functions import country_repartition, keyword_repartition, time_evolut
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../datasets").resolve()
 
-# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
-df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
+df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
+# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
-# app = dash.Dash(__name__, external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 
 layout = html.Div(children=[
     html.Div([
@@ -25,7 +24,7 @@ layout = html.Div(children=[
     ]),
     html.Div(id='threegraphs', className='row', children=[
         html.Div(id='worldgrah', children=[
-            dcc.Graph(id='graph', figure=network_graph(df_ini, 20))
+            # dcc.Graph(id='graph', figure=network_graph(df_ini, 20))
         ]),
         html.Div(id='othergraph', className='row', children=[
             html.Div(className='four columns', style={"border": "2px black solid"}, children=[
@@ -46,26 +45,7 @@ layout = html.Div(children=[
 
             ]),
             html.Div(className='four columns', style={"border": "2px black solid"}, children=[
-                # dcc.RadioItems(
-                #     id='radio-keywords',
-                #     options=[
-                #         {'label': 'curated', 'value': 1},
-                #         {'label': 'all', 'value': 0}
-                #     ],
-                #
-                #     value=0,
-                #     labelStyle={'display': 'inline-block'}
-                # ),
-                # dcc.RadioItems(
-                #     id='radio-nb-keyword',
-                #     options=[
-                #         {'label': '5', 'value': 5},
-                #         {'label': '10', 'value': 10},
-                #         {'label': '20', 'value': 20}
-                #     ],
-                #     value=10,
-                #     labelStyle={'display': 'inline-block'}
-                # ),
+
                 html.Div(id='keyword_repartition', children=[
 
                 ]),
@@ -104,7 +84,8 @@ layout = html.Div(children=[
      Input('keyword_input', 'value'),
      Input('radio-nb-country', 'value'),
      Input('time-evolution', 'value')
-     ]
+     ],
+
 )
 def update_page(selected_range, countries, search, keywords, nb_country, typ):
     filtered_df = filter_db(df_ini, selected_range=selected_range, countries=countries, search=search,

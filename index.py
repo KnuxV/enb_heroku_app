@@ -27,7 +27,6 @@ def display_page(pathname):
     if pathname == '/apps/table':
         return table.layout
     else:
-        # return "404-Page Error! Please choose a link"
         return table.layout
 
 

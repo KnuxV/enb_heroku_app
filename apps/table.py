@@ -8,8 +8,8 @@ from prep_functions import upperpart_layout, \
 
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../datasets").resolve()
-# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
-df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
+df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
+# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
 layout = html.Div(children=[
     html.Div([
@@ -30,13 +30,13 @@ layout = html.Div(children=[
     [Input('range-slider', 'value'),
      Input('country_input', 'value'),
      Input('search_input', 'value'),
-     Input('keyword_input', 'value')]
+     Input('keyword_input', 'value')],
 )
 def update_table(selected_range, countries, search, keywords):
     filtered_df = filter_db(df_ini, selected_range=selected_range, countries=countries, search=search,
                             keywords=keywords)
 
-    return generate_table(filtered_df), update_markdown(filtered_df)
+    return generate_table(filtered_df, max_rows=len(filtered_df)), update_markdown(filtered_df)
 
 
 @app.callback(

@@ -10,11 +10,11 @@ import plotly.graph_objects as go
 from dash import html, dcc
 
 # get relative data folder
-PATH = pathlib.Path(__file__).parent
-DATA_PATH = PATH.joinpath("datasets").resolve()
+# PATH = pathlib.Path(__file__).parent
+# DATA_PATH = PATH.joinpath("datasets").resolve()
 
 # df_ini = pd.read_pickle(DATA_PATH.joinpath("df_all_message_venturini_categorical.pkl"))
-df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
+# df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
 
 def filter_db(df, selected_range, countries, search, keywords):
@@ -205,14 +205,10 @@ def unique_keywords(df) -> typing.List:
     """
     return_list = []
     if 'Venturini_keywords' in df.columns:
-        """
         for ind, row in df.iterrows():
             if row['Venturini_keywords'] != "":
                 return_list = return_list + list(row['Venturini_keywords'].split(", "))
-        """
-        grouped = df['Venturini_keywords'].groupby('Venturini_keywords')
-        keyword_type = grouped.count()
-        return_list = keyword_type.index.to_list()
+
     elif 'event' in df.columns:
         pattern = r'\d+-([A-Z]+)-\d+'
         grouped = df["event"].groupby(df["event"].str.extract(pattern, expand=False))

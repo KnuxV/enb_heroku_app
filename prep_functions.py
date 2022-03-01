@@ -304,7 +304,7 @@ def generate_table(dataframe, max_rows=1000):
     """
     url_start = 'https://enb.iisd.org//vol12/'
     url_finish = '.html'
-    return html.Table(style={'border': '1px solid black', 'width': '100%', 'table-layout': 'fixed'},
+    return html.Table(style={'border': '1px solid black', 'width': '100%', 'table-layout': 'fixed', 'font-size': '50%'},
 
                       children=
                       # Header
@@ -323,7 +323,6 @@ def generate_table(dataframe, max_rows=1000):
                           html.Th("Venturini", style={'width': '13%'})]
                       )] +
                       # Body
-
 
                       [html.Tr(
                           [html.Td(dataframe.iloc[i][col]) if col != 'Num'

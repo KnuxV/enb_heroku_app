@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc
 
+
 # get relative data folder
 # PATH = pathlib.Path(__file__).parent
 # DATA_PATH = PATH.joinpath("datasets").resolve()
@@ -75,7 +76,8 @@ def country_repartition(df, nb_country=10):
     df_res = pd.DataFrame(res, columns=['Country', 'Support', 'Mention'])
     color_discrete_map = {'opposition': 'rgb(255,0,0)', 'support': 'rgb(0,0,255)'}
     fig = px.bar(df_res, x="Country", y="Mention", color="Support", text_auto=True,
-                 color_discrete_map=color_discrete_map, title="Country participation in mentions")
+                 color_discrete_map=color_discrete_map)
+    fig.update_layout(title="Countries participation", title_font_size=12)
     return fig
 
 
@@ -131,9 +133,9 @@ def time_evolution(df, typ="country", nb_item=5):
                 lst_lst.append(tup)
 
         df_country_year = pd.DataFrame(lst_lst, columns=['year', 'country', 'count'])
-        fig = px.line(df_country_year, x="year", y="count", color='country')
-        return fig
-    if typ == "keyword":
+        fig = px.bar(df_country_year, x="year", y="count", color='country', text='country')
+
+    elif typ == "keyword":
         m_k = [tup[0] for tup in main_keyword(df)]
         dic_year = {y: Counter() for y in range(1995, 2020)}
         for ind, row in df.iterrows():
@@ -147,8 +149,9 @@ def time_evolution(df, typ="country", nb_item=5):
                 tup = (year, keyword, count)
                 lst_lst.append(tup)
         df_keyword_year = pd.DataFrame(lst_lst, columns=['year', 'keyword', 'count'])
-        fig = px.line(df_keyword_year, x="year", y="count", color='keyword')
-        return fig
+        fig = px.bar(df_keyword_year, x="year", y="count", color='keyword', text='keyword')
+    fig.update_layout(title="Time evolution", title_font_size=12)
+    return fig
 
 
 def unique_actors(df, support="all") -> typing.List:
@@ -305,15 +308,31 @@ def generate_table(dataframe, max_rows=1000):
 
                       children=
                       # Header
-                      [html.Tr([html.Th(col) for col in dataframe.columns], )] +
+                      # [html.Tr([html.Th(col, style={'width': '5%'}) if col not in ["Message", "Sentence"] else html.Th(
+                      #     col, style={'width': '30%'}) for col in dataframe.columns], )] +
+                      [html.Tr(children=[
+                          html.Th("Sup", style={'width': '10%'}),
+                          html.Th("Opp", style={'width': '5%'}),
+                          html.Th("Pred", style={'width': '7%'}),
+                          html.Th("Type", style={'width': '3%'}),
+                          html.Th("Message", style={'width': '20%'}),
+                          html.Th("Keywords", style={'width': '8%'}),
+                          html.Th("Sentence", style={'width': '25%'}),
+                          html.Th("Year", style={'width': '3%'}),
+                          html.Th("Num", style={'width': '6%'}),
+                          html.Th("Venturini", style={'width': '13%'})]
+                      )] +
                       # Body
-                      # https: // enb.iisd.org // vol12 / enb12764e.html
+
 
                       [html.Tr(
-                           [html.Td(dataframe.iloc[i][col] if col != 'Num' else html.Td(html.A(href=url_start+str(dataframe.iloc[i]['Num'])+url_finish, children=dataframe.iloc[i][col], target='_blank')), style={'font_size': '10'}) for col in
-                            dataframe.columns],
-
-                       ) for i in range(min(len(dataframe), max_rows))],
+                          [html.Td(dataframe.iloc[i][col]) if col != 'Num'
+                           else html.Td(
+                              html.A(href=url_start + str(dataframe.iloc[i]['Num']) + url_finish,
+                                     children=dataframe.iloc[i][col], target='_blank')) for col in
+                           dataframe.columns])
+                          for i in range(min(len(dataframe), max_rows))
+                      ],
 
                       )
 
@@ -474,7 +493,7 @@ def network_graph(df, total_actors):
     edge_trace.append(middle_hover_trace)
     fig = go.Figure(data=edge_trace,
                     layout=go.Layout(
-                        title='<br>Network graph showing actor collaboration',
+                        title='<br>Network graph showing actors collaborations',
                         titlefont_size=16,
                         showlegend=False,
                         hovermode='closest',

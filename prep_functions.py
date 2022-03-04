@@ -291,12 +291,11 @@ def upperpart_layout(df: pd.DataFrame, page):
             ]),
             html.Div(className='row', children=[
                 html.Div(className='five columns', children=[
-
                     html.Div(className='row', children=[
-                        html.Div(className='two columns', children=[
-                            html.Pre(children="Actors :", style={"fontSize": "100%"})
+                        html.Div(children=[
+                            html.Pre(children="Actors:", style={"fontSize": "100%"})
                         ]),
-                        html.Div(className='three columns', children=[
+                        html.Div(children=[
                             dcc.Dropdown(
                                 options=(option_country(df)),
                                 multi=True,
@@ -306,10 +305,10 @@ def upperpart_layout(df: pd.DataFrame, page):
                         ]),
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(className='two columns', children=[
-                            html.Pre(children="Search :", style={"fontSize": "100%"})
+                        html.Div(children=[
+                            html.Pre(children="Search:", style={"fontSize": "100%"})
                         ]),
-                        html.Div(className='three columns', children=[
+                        html.Div(children=[
                             dcc.Input(
                                 type="text",
                                 value="",
@@ -321,10 +320,10 @@ def upperpart_layout(df: pd.DataFrame, page):
                 ]),
                 html.Div(className='five columns', children=[
                     html.Div(className='row', children=[
-                        html.Div(className='two columns', children=[
-                            html.Pre(children="Clusters : ", style={"fontSize": "100%"})
+                        html.Div(children=[
+                            html.Pre(children="Clusters: ", style={"fontSize": "100%"})
                         ]),
-                        html.Div(className='three columns', children=[
+                        html.Div(children=[
                             dcc.Dropdown(
                                 options=option_keywords(df),
                                 multi=True,
@@ -334,10 +333,10 @@ def upperpart_layout(df: pd.DataFrame, page):
                         ])
                     ]),
                     html.Div(className='row', children=[
-                        html.Div(className='two columns', children=[
-                            html.Pre(children="Predicate : ", style={"fontSize": "100%"})
+                        html.Div(children=[
+                            html.Pre(children="Predicate: ", style={"fontSize": "100%"})
                         ]),
-                        html.Div(className='three columns', children=[
+                        html.Div(children=[
                             dcc.Dropdown(
                                 options=[{'label': 'All', 'value': 'All'}, {'label': 'Support', 'value': 'sup'},
                                          {'label': 'Opposition', 'value': 'opp'}, {'label': 'Neutral', 'value': 'rep'}],

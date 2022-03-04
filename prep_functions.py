@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc
+import dash_bootstrap_components as dbc
 
 
 # get relative data folder
@@ -18,7 +19,7 @@ from dash import html, dcc
 # df_ini = pd.read_pickle(DATA_PATH.joinpath("df_full_enb_corpus_categorical.pkl"))
 
 
-def filter_db(df, selected_range, countries, search, keywords):
+def filter_db(df, selected_range, countries, search, keywords, predicate):
     cond_on_year = df['Year'].between(selected_range[0], selected_range[1], inclusive='both')
     filtered_df = df[cond_on_year]
     if countries:
@@ -39,6 +40,9 @@ def filter_db(df, selected_range, countries, search, keywords):
             if filtered_df['event'].str.contains(keyword).any():
                 cond_on_keyword = filtered_df['event'].str.contains(keyword)
                 filtered_df = filtered_df[cond_on_keyword]
+    if predicate != "All":
+        cond_on_pred = filtered_df['Type'] == predicate
+        filtered_df = filtered_df[cond_on_pred]
 
     return filtered_df
 
@@ -77,7 +81,10 @@ def country_repartition(df, nb_country=10):
     color_discrete_map = {'opposition': 'rgb(255,0,0)', 'support': 'rgb(0,0,255)'}
     fig = px.bar(df_res, x="Country", y="Mention", color="Support", text_auto=True,
                  color_discrete_map=color_discrete_map)
-    fig.update_layout(title="Countries participation", title_font_size=12)
+    fig.update_layout(title="Countries participation", title_font_size=12,
+                      legend=dict(x=0, y=-0.5, orientation="h", font=dict(family="Courier", size=10, color="black")),
+                      legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
+    fig.update_xaxes(title="", showticklabels=True)
     return fig
 
 
@@ -102,7 +109,7 @@ def keyword_repartition(df):
                      title="Frequency of occurrence of Venturini clusters")
         fig.update_traces(textposition='inside', textinfo='value+percent')
         fig.update_layout(title_font_size=12,
-                          legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                          legend=dict(orientation="v", font=dict(family="Courier", size=10, color="black")),
                           legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
 
     elif 'event' in df.columns:
@@ -135,7 +142,7 @@ def time_evolution(df, typ="country", nb_item=5):
         df_country_year = pd.DataFrame(lst_lst, columns=['year', 'country', 'count'])
         fig = px.bar(df_country_year, x="year", y="count", color='country', text='country')
 
-    elif typ == "keyword":
+    elif typ == "cluster":
         m_k = [tup[0] for tup in main_keyword(df)]
         dic_year = {y: Counter() for y in range(1995, 2020)}
         for ind, row in df.iterrows():
@@ -151,6 +158,32 @@ def time_evolution(df, typ="country", nb_item=5):
         df_keyword_year = pd.DataFrame(lst_lst, columns=['year', 'keyword', 'count'])
         fig = px.bar(df_keyword_year, x="year", y="count", color='keyword', text='keyword')
     fig.update_layout(title="Time evolution", title_font_size=12)
+    fig.update_layout(title_font_size=12,
+                      legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                      legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
+    fig.update_xaxes(title="", showticklabels=True)
+    return fig
+
+
+def type_predicate_repartition(df):
+    """
+
+    :param df:
+    :return:
+    """
+    grouped = df['Type'].groupby(df['Type'])
+    pred_type = grouped.count()
+    pred_type.sort_values(inplace=True, ascending=False)
+    dic_color = {'rep': 'blue', 'sup': 'green', 'opp': 'red'}
+    lst_color = [dic_color[elem] for elem in pred_type.index]
+    dic = {'sup': 'Support', 'opp': 'Opposition', 'rep': 'Neutral'}
+
+    fig = px.pie(pred_type, values='Type', names=[dic[elem] for elem in pred_type.index], title='Predicate repartition')
+
+    fig.update_traces(textposition='inside', textinfo='label+percent', marker=dict(colors=lst_color))
+    fig.update_layout(title_font_size=12,
+                      legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
+                      legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
     return fig
 
 
@@ -257,40 +290,70 @@ def upperpart_layout(df: pd.DataFrame, page):
                 ),
             ]),
             html.Div(className='row', children=[
-                html.Div(className='four columns', children=[
-                    html.Div([
-                        html.Pre(children="Actors :", style={"fontSize": "150%"}),
-                        dcc.Dropdown(
-                            options=(option_country(df)),
-                            multi=True,
-                            value=None,
-                            id="country_input",
-                        )
+                html.Div(className='five columns', children=[
+
+                    html.Div(className='row', children=[
+                        html.Div(className='two columns', children=[
+                            html.Pre(children="Actors :", style={"fontSize": "100%"})
+                        ]),
+                        html.Div(className='three columns', children=[
+                            dcc.Dropdown(
+                                options=(option_country(df)),
+                                multi=True,
+                                value=None,
+                                id="country_input",
+                            )
+                        ]),
                     ]),
-                    html.Div([
-                        html.Pre(children="Search in message: ", style={"fontSize": "150%"}),
-                        dcc.Input(
-                            type="text",
-                            value="",
-                            id="search_input",
-                            placeholder="Filter messages using one or more words",
-                        )
+                    html.Div(className='row', children=[
+                        html.Div(className='two columns', children=[
+                            html.Pre(children="Search :", style={"fontSize": "100%"})
+                        ]),
+                        html.Div(className='three columns', children=[
+                            dcc.Input(
+                                type="text",
+                                value="",
+                                id="search_input",
+                                placeholder="Filter messages using one or more words",
+                            )
+                        ])
                     ]),
-                    html.Div([
-                        html.Pre(children="Clusters : ", style={"fontSize": "150%"}),
-                        dcc.Dropdown(
-                            options=option_keywords(df),
-                            multi=True,
-                            value="",
-                            id="keyword_input"
-                        )
+                ]),
+                html.Div(className='five columns', children=[
+                    html.Div(className='row', children=[
+                        html.Div(className='two columns', children=[
+                            html.Pre(children="Clusters : ", style={"fontSize": "100%"})
+                        ]),
+                        html.Div(className='three columns', children=[
+                            dcc.Dropdown(
+                                options=option_keywords(df),
+                                multi=True,
+                                value="",
+                                id="keyword_input"
+                            )
+                        ])
+                    ]),
+                    html.Div(className='row', children=[
+                        html.Div(className='two columns', children=[
+                            html.Pre(children="Predicate : ", style={"fontSize": "100%"})
+                        ]),
+                        html.Div(className='three columns', children=[
+                            dcc.Dropdown(
+                                options=[{'label': 'All', 'value': 'All'}, {'label': 'Support', 'value': 'sup'},
+                                         {'label': 'Opposition', 'value': 'opp'}, {'label': 'Neutral', 'value': 'rep'}],
+                                multi=False,
+                                value='All',
+                                id="predicate_input"
+                            )
+                        ])
                     ])
                 ]),
-                html.Div(className='four columns', children=[
+                html.Div(className='two columns', style={'text-align': 'left'}, children=[
                     dcc.Markdown(update_markdown(df), id=page)
                 ])
-            ])
+            ]),
         ])
+
     return upper_layout
 
 
@@ -304,41 +367,51 @@ def generate_table(dataframe, max_rows=1000):
     """
     url_start = 'https://enb.iisd.org//vol12/'
     url_finish = '.html'
-    return html.Table(style={'border': '1px solid black', 'width': '100%', 'table-layout': 'fixed', 'font-size': '50%'},
+    dic_color_pred = {'rep': 'blue', 'sup': 'green', 'opp': 'red'}
 
-                      children=
-                      # Header
-                      # [html.Tr([html.Th(col, style={'width': '5%'}) if col not in ["Message", "Sentence"] else html.Th(
-                      #     col, style={'width': '30%'}) for col in dataframe.columns], )] +
-                      [html.Tr(children=[
-                          html.Th("Sup", style={'width': '10%'}),
-                          html.Th("Opp", style={'width': '5%'}),
-                          html.Th("Pred", style={'width': '7%'}),
-                          html.Th("Type", style={'width': '3%'}),
-                          html.Th("Message", style={'width': '20%'}),
-                          html.Th("Keywords", style={'width': '8%'}),
-                          html.Th("Sentence", style={'width': '25%'}),
-                          html.Th("Year", style={'width': '3%'}),
-                          html.Th("Num", style={'width': '6%'}),
-                          html.Th("Venturini", style={'width': '13%'})]
-                      )] +
-                      # Body
+    # table = dbc.Table.from_dataframe(
+    #     dataframe, striped=True, bordered=True, hover=True, index=True
+    # )
+    # return table
+    table_header = [html.Tr(children=[
+        html.Th("Sup", style={'width': '10%'}),
+        html.Th("Opp", style={'width': '7%'}),
+        html.Th("Pred", style={'width': '7%'}),
+        html.Th("Type", style={'width': '3%'}),
+        html.Th("Message", style={'width': '20%'}),
+        html.Th("Keywords", style={'width': '8%'}),
+        html.Th("Sentence", style={'width': '25%'}),
+        html.Th("Year", style={'width': '3%'}),
+        html.Th("Num", style={'width': '6%'}),
+        html.Th("Venturini", style={'width': '12%'})])]
 
-                      [html.Tr(
-                          [html.Td(dataframe.iloc[i][col]) if col != 'Num'
-                           else html.Td(
-                              html.A(href=url_start + str(dataframe.iloc[i]['Num']) + url_finish,
-                                     children=dataframe.iloc[i][col], target='_blank')) for col in
-                           dataframe.columns])
-                          for i in range(min(len(dataframe), max_rows))
-                      ],
-
-                      )
+    # table_body = [html.Tbody([row1, row2, row3, row4])]
+    lst_rows = []
+    for i in range(min(len(dataframe), max_rows)):
+        row = []
+        for col in dataframe.columns:
+            if col == 'Num':
+                cell = html.Td(
+                    html.A(href=url_start + str(dataframe.iloc[i]['Num']) + url_finish,
+                           children=dataframe.iloc[i][col], target='_blank')
+                )
+            elif col == 'Predicate':
+                cell = html.Td(children=dataframe.iloc[i][col],
+                               style={'color': dic_color_pred[dataframe.iloc[i]['Type']]})
+            else:
+                cell = html.Td(dataframe.iloc[i][col])
+            row.append(cell)
+        lst_rows.append(html.Tr(row))
+    table_body = [html.Tbody(lst_rows)]
+    table = dbc.Table(
+        table_header + lst_rows, striped=True, bordered=False, hover=True,
+        style={'width': '100%', 'table-layout': 'fixed', 'font-size': '60%'}
+    )
+    return table
 
 
 def network_graph(df, total_actors):
     """
-
     :param total_actors:
     :param df:
     :return:
@@ -402,10 +475,6 @@ def network_graph(df, total_actors):
         g.add_edge(c1, c2, weight=count_agree + count_disagree, agree=row["edge_agree"], disagree=row["edge_disagree"])
 
     pos = nx.spring_layout(g, k=1, iterations=200)
-    # pos = nx.nx_pydot.graphviz_layout(g)
-
-    # nx.draw_networkx_nodes(g, pos, node_size=node_size)
-    # labels = nx.get_edge_attributes(g, "weight")
 
     edges = g.edges()
 

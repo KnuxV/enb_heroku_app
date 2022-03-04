@@ -15,7 +15,7 @@ layout = html.Div(children=[
     html.Div([
         html.Button("Download CSV", id="btn_csv"),
         dcc.Download(id="download-dataframe-csv"),
-        html.H1('Summary', style={"textAlign": "center"}),
+
     ]),
     html.Div(id='upper', children=[
         upperpart_layout(df_ini, page='summary-markdown-table'),
@@ -30,11 +30,12 @@ layout = html.Div(children=[
     [Input('range-slider', 'value'),
      Input('country_input', 'value'),
      Input('search_input', 'value'),
-     Input('keyword_input', 'value')],
+     Input('keyword_input', 'value'),
+     Input('predicate_input', 'value')],
 )
-def update_table(selected_range, countries, search, keywords):
+def update_table(selected_range, countries, search, keywords, predicate):
     filtered_df = filter_db(df_ini, selected_range=selected_range, countries=countries, search=search,
-                            keywords=keywords)
+                            keywords=keywords, predicate=predicate)
 
     return generate_table(filtered_df, max_rows=len(filtered_df)), update_markdown(filtered_df)
 

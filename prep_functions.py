@@ -1,4 +1,5 @@
 import pathlib
+import re
 import typing
 from collections import Counter
 from itertools import combinations, product
@@ -24,9 +25,12 @@ def filter_db(df, selected_range, countries, search, keywords, predicate):
     filtered_df = df[cond_on_year]
     if countries:
         for country in countries:
-            if filtered_df['Actor_Support'].str.contains(country).any():
-                cond_on_country = filtered_df['Actor_Support'].str.contains(country)
-                filtered_df = filtered_df[cond_on_country]
+            c = r'\b' + re.escape(str(country)) + r'\b'
+            if filtered_df['Actor_Support'].str.contains(c).any() or \
+                    filtered_df['Actor_Opposition'].str.contains(c).any():
+                cond_on_country_sup = filtered_df['Actor_Support'].str.contains(c)
+                cond_on_country_opp = filtered_df['Actor_Opposition'].str.contains(c)
+                filtered_df = filtered_df[cond_on_country_sup | cond_on_country_opp]
     # SEARCH LOGIC
     if search != "":
         cond_search = filtered_df["Message"].str.contains(search)
@@ -104,10 +108,18 @@ def keyword_repartition(df):
     if 'Venturini_keywords' in df.columns:
         lst_main_keywords = main_keyword(df)
         df_keywords_counter = pd.DataFrame(lst_main_keywords, columns=['keyword', 'count'])
+
+        dic_color = {'Fuels and transport sector': 'hotpink', 'Energy and technology transfer': 'brown',
+                     'Clean development mechanism': 'lime', 'Environmental and social impacts': 'red',
+                     'GHC emissions': 'gray', 'Kyoto protocol': 'blue', 'Redd': 'green',
+                     'Vulnerability and adaptation':'purple', 'Funding and equity':'yellow',
+                     'Land use and forests': 'darksalmon'}
+        lst_color = [dic_color[elem] for elem in df_keywords_counter['keyword']]
         # fig = px.bar(df_keywords_counter, x="keyword", y="count", text_auto=True)
         fig = px.pie(df_keywords_counter, names="keyword", values="count",
                      title="Frequency of occurrence of Venturini clusters")
-        fig.update_traces(textposition='inside', textinfo='value+percent')
+
+        fig.update_traces(textposition='inside', textinfo='value+percent', marker=dict(colors=lst_color))
         fig.update_layout(title_font_size=12,
                           legend=dict(orientation="v", font=dict(family="Courier", size=10, color="black")),
                           legend_title=dict(font=dict(family="Courier", size=10, color="blue")))
@@ -156,7 +168,14 @@ def time_evolution(df, typ="country", nb_item=5):
                 tup = (year, keyword, count)
                 lst_lst.append(tup)
         df_keyword_year = pd.DataFrame(lst_lst, columns=['year', 'keyword', 'count'])
-        fig = px.bar(df_keyword_year, x="year", y="count", color='keyword', text='keyword')
+        dic_color = {'Fuels and transport sector': 'hotpink', 'Energy and technology transfer': 'brown',
+                     'Clean development mechanism': 'lime', 'Environmental and social impacts': 'red',
+                     'GHC emissions': 'gray', 'Kyoto protocol': 'blue', 'Redd': 'green',
+                     'Vulnerability and adaptation':'purple', 'Funding and equity':'yellow',
+                     'Land use and forests': 'darksalmon'}
+        lst_color = [dic_color[elem] for elem in df_keyword_year['keyword']]
+        fig = px.bar(df_keyword_year, x="year", y="count", color='keyword', color_discrete_map=dic_color, text='keyword')
+
     fig.update_layout(title="Time evolution", title_font_size=12)
     fig.update_layout(title_font_size=12,
                       legend=dict(orientation="h", font=dict(family="Courier", size=10, color="black")),
@@ -453,6 +472,8 @@ def network_graph(df, total_actors):
     df_edge["c2"] = df_edge.edge.apply(lambda x: x[1])
     df_edge = df_edge.drop(columns="edge")
 
+    if total_actors == "all":
+        total_actors = len(df_actors)
     df_actors = df_actors.nlargest(total_actors, "total_sup").reset_index(drop=True)
     cond_c1 = df_edge["c1"].isin(df_actors.Actor.values.tolist())
     cond_c2 = df_edge["c2"].isin(df_actors.Actor.values.tolist())

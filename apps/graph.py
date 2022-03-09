@@ -18,6 +18,17 @@ layout = html.Div(children=[
         upperpart_layout(df_ini, page='summary-markdown-graph'),
     ]),
     html.Div(id='threegraphs', className='row', children=[
+        dcc.RadioItems(
+            id='radio-country-network',
+            options=[
+                {'label': '10', 'value': 10},
+                {'label': '20', 'value': 20},
+                {'label': '50', 'value': 50},
+                {'label': 'all', 'value': 'all'}
+            ],
+            value=20,
+            labelStyle={'display': 'inline-block'}
+        ),
         html.Div(id='worldgrah', children=[
             # dcc.Graph(id='graph', figure=network_graph(df_ini, 20))
         ]),
@@ -87,19 +98,20 @@ layout = html.Div(children=[
      Input('keyword_input', 'value'),
      Input('radio-nb-country', 'value'),
      Input('time-evolution', 'value'),
-     Input('predicate_input', 'value')
+     Input('predicate_input', 'value'),
+     Input('radio-country-network', 'value'),
      ],
 
 )
-def update_page(selected_range, countries, search, keywords, nb_country, typ, predicate):
+def update_page(selected_range, countries, search, keywords, nb_country, typ, predicate, nb_actor_network):
     filtered_df = filter_db(df_ini, selected_range=selected_range, countries=countries, search=search,
                             keywords=keywords, predicate=predicate)
 
     return_country_repartition = dcc.Graph(figure=country_repartition(filtered_df, nb_country=nb_country))
     return_keyword_repartition = dcc.Graph(id="test", figure=keyword_repartition(filtered_df))
     return_year_evolution = dcc.Graph(figure=time_evolution(filtered_df, typ=typ))
-    return_network_graph = dcc.Graph(id='graph', figure=network_graph(filtered_df, 20))
+    return_network_graph = dcc.Graph(id='graph', figure=network_graph(filtered_df, total_actors=nb_actor_network))
     return_predicate_repartition = dcc.Graph(id='pred_graph', figure=type_predicate_repartition(filtered_df))
 
     return return_country_repartition, return_keyword_repartition, return_year_evolution, return_network_graph, \
-           return_predicate_repartition,update_markdown(filtered_df)
+           return_predicate_repartition, update_markdown(filtered_df)
